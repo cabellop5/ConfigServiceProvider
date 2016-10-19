@@ -111,7 +111,19 @@ $app->register(new \Euskadi31\Silex\Provider\ConfigServiceProvider(
 Make sure you register ConfigServiceProvider last with your application. If you do not do this,
 the default values of other Providers will override your configuration.
 
-By default path cache is null and debug is false.
+
+### Fork with Cache Feature
+
+Active this fork in your composer.json:
+
+```json
+"repositories": [
+   {
+     "type": "vcs",
+     "url": "https://github.com/cabellop5/ConfigServiceProvider"
+   }
+  ]
+```
 
 ## License
 
