@@ -95,4 +95,53 @@ class ConfigProviderTest extends \PHPUnit_Framework_TestCase
         $this->assertEquals('127.0.0.1', $app['redis.options']['server']['host']);
         $this->assertEquals(1337, $app['redis.options']['server']['port']);
     }
+
+    public function testConfigWithCacheAndDebug()
+    {
+        $app = new Application;
+        $app['debug'] = true;
+
+        $app->register(
+            new ConfigServiceProvider(
+                __DIR__ . '/../_files/config.yml',
+                [],
+                __DIR__ . '/../_files/'
+            )
+        );
+
+        $this->assertEquals('apc', $app['cache.options']['default']['driver']);
+    }
+
+    /**
+     * @expectedException Exception
+     */
+    public function testConfigWithCacheAndNotDebugBadFolder()
+    {
+        $app = new Application;
+
+        $app->register(
+            new ConfigServiceProvider(
+                __DIR__ . '/../_files/config.yml',
+                [],
+                __DIR__ . '/../_files/folder/'
+            )
+        );
+
+        $this->assertEquals('apc', $app['cache.options']['default']['driver']);
+    }
+
+    public function testConfigWithCacheAndNotDebug()
+    {
+        $app = new Application;
+
+        $app->register(
+            new ConfigServiceProvider(
+                __DIR__ . '/../_files/config.yml',
+                [],
+                __DIR__ . '/../_files/'
+            )
+        );
+
+        $this->assertEquals('apc', $app['cache.options']['default']['driver']);
+    }
 }

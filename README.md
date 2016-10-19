@@ -84,10 +84,34 @@ You can also specify replacements inside the config file by using a key with
 xsl.path: %root_path%/xsl
 ```
 
+### Cache
+
+Also, you can pass as third parameter an writable path for cache your config.
+This store the result of Yaml Parser in one file php. 
+It create or include this file.
+In debug mode it always read Yaml file.
+
+```php
+<?php
+
+$app = new Silex\Application;
+
+$app->register(new \Euskadi31\Silex\Provider\ConfigServiceProvider(
+    __DIR__ . '/config/services.yml',
+    [
+        'data_replacements' => __DIR__ . '/your-data'
+    ],
+    __DIR__ . '/../app/cache/config/'
+));
+```
+
+
 ### Register order
 
 Make sure you register ConfigServiceProvider last with your application. If you do not do this,
 the default values of other Providers will override your configuration.
+
+By default path cache is null and debug is false.
 
 ## License
 

@@ -1,6 +1,7 @@
 # directories
 vendor/
 build/
+tests/_files/config.php
 
 # files
 composer.phar

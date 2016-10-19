@@ -12,9 +12,6 @@ namespace Euskadi31\Silex\Provider;
 
 use Pimple\Container;
 use Pimple\ServiceProviderInterface;
-use RuntimeException;
-use InvalidArgumentException;
-use SplFileInfo;
 use Symfony\Component\Yaml\Yaml;
 
 /**
@@ -25,7 +22,7 @@ use Symfony\Component\Yaml\Yaml;
 class ConfigServiceProvider implements ServiceProviderInterface
 {
     /**
-     * @var SplFileInfo
+     * @var \SplFileInfo
      */
     private $filename;
 
@@ -35,34 +32,40 @@ class ConfigServiceProvider implements ServiceProviderInterface
     private $replacements = [];
 
     /**
-     *
+     * @var string|null
+     */
+    private $pathCache;
+
+    /**
      * @param string $filename
      * @param array  $replacements
+     * @param string|null  $pathCache
      */
-    public function __construct($filename, array $replacements = [])
+    public function __construct($filename, array $replacements = [], $pathCache = null)
     {
         if (empty($filename)) {
-            throw new RuntimeException(
+            throw new \RuntimeException(
                 'A valid configuration file must be passed before reading the config.'
             );
         }
 
-        $this->filename = new SplFileInfo($filename);
+        $this->filename = new \SplFileInfo($filename);
 
         if (!empty($replacements)) {
             foreach ($replacements as $key => $value) {
                 $this->replacements['%' . $key . '%'] = $value;
             }
         }
+        $this->pathCache = $pathCache;
     }
 
     /**
-     * @param  Pimple\Container $app
+     * @param  Container $app
      * @return void
      */
     public function register(Container $app)
     {
-        $config = $this->loadConfig();
+        $config = $this->loadConfig($app['debug']);
 
         foreach ($config as $name => $value) {
             if ('%' === substr($name, 0, 1)) {
@@ -74,7 +77,6 @@ class ConfigServiceProvider implements ServiceProviderInterface
     }
 
     /**
-     *
      * @param  Container $app
      * @param  array     $config
      * @return void
@@ -135,23 +137,56 @@ class ConfigServiceProvider implements ServiceProviderInterface
 
     /**
      * Load config file
+     * @param bool $debug
      *
+     * @throws \InvalidArgumentException|\Exception
      * @return array
      */
-    private function loadConfig()
+    private function loadConfig($debug)
     {
         if (!$this->filename->isFile()) {
-            throw new InvalidArgumentException(sprintf(
+            throw new \InvalidArgumentException(sprintf(
                 'The config file "%s" does not exist.',
                 $this->filename
             ));
         }
 
         if ($this->filename->getExtension() != 'yml') {
-            throw new InvalidArgumentException(sprintf(
+            throw new \InvalidArgumentException(sprintf(
                 'The config file "%s" appears to have an invalid format.',
                 $this->filename
             ));
+        }
+
+        if (null !== $this->pathCache && !$debug) {
+            $fileCache = str_replace(
+                '.' . $this->filename->getExtension(),
+                '.php',
+                $this->filename->getFilename()
+            );
+            $cache = new \SplFileInfo($this->pathCache . $fileCache);
+
+            if (!$cache->isFile()) {
+                $data = Yaml::parse(file_get_contents($this->filename));
+
+                $dataout =
+                    str_replace(
+                        array('&#40', '&#41'),
+                        array('(', ')'),
+                        var_export($data, true)
+                    )
+                ;
+
+                if (@file_put_contents($this->pathCache . $fileCache, '<?php return ' . $dataout . ';') === false) {
+                    throw new \Exception(sprintf('Check your folder Cache %s', $this->pathCache));
+                }
+
+                chmod($this->pathCache . $fileCache , 0777);
+
+                return $data;
+            }
+
+            return include $this->pathCache . $fileCache;
         }
 
         return Yaml::parse(file_get_contents($this->filename));
