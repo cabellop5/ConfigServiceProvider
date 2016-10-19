@@ -15,6 +15,9 @@
         {
             "name": "Axel Etcheverry",
             "email": "axel@etcheverry.biz"
+        }, {
+            "name": "Pablo Cabello",
+            "homepage": "https://github.com/cabellop5/"
         }
     ],
     "autoload": {
